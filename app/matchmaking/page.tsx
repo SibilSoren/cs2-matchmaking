@@ -42,18 +42,23 @@ interface MapVetoProps {
   mapVetoFormat: "bo1" | "bo3" | "bo5";
   captains: Player[];
   coinFlipWinner: Player | null;
+  teamA: Player[]; // Add this line
+  teamB: Player[]; // Add this line
 }
 
 const MapVeto: React.FC<MapVetoProps> = ({
   mapVetoFormat,
   captains,
   coinFlipWinner,
+  teamA,
+  teamB,
 }) => {
   const [vetoedMaps, setVetoedMaps] = useState<string[]>([]);
   const [pickedMaps, setPickedMaps] = useState<string[]>([]);
   const [mapVetoTurn, setMapVetoTurn] = useState<Player | null>(null);
   const [vetoComplete, setVetoComplete] = useState(false);
   const [deciderMap, setDeciderMap] = useState<string | null>(null);
+  const [showTeamModal, setShowTeamModal] = useState(false);
 
   useEffect(() => {
     setMapVetoTurn(
@@ -204,11 +209,52 @@ const MapVeto: React.FC<MapVetoProps> = ({
               </li>
             ))}
           </ul>
-          <Button color="primary" className="mt-4">
+          <Button
+            color="primary"
+            className="mt-4"
+            onClick={() => setShowTeamModal(true)}
+          >
             Proceed to Match
           </Button>
         </div>
       )}
+
+      <Modal isOpen={showTeamModal} onClose={() => setShowTeamModal(false)}>
+        <ModalContent>
+          <ModalHeader>Team Rosters</ModalHeader>
+          <ModalBody>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h5 className="font-semibold mb-2">
+                  {captains[0].name}&apos;s Team
+                </h5>
+                <ul>
+                  <li>{captains[0].name} (Captain)</li>
+                  {teamA.map((player) => (
+                    <li key={player.id}>{player.name}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-2">
+                  {captains[1].name}&apos;s Team
+                </h5>
+                <ul>
+                  <li>{captains[1].name} (Captain)</li>
+                  {teamB.map((player) => (
+                    <li key={player.id}>{player.name}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={() => setShowTeamModal(false)}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };
@@ -470,6 +516,8 @@ export default function Matchmaking() {
                 mapVetoFormat={mapVetoFormat}
                 captains={captains}
                 coinFlipWinner={coinFlipWinner}
+                teamA={teamA} // Add this line
+                teamB={teamB} // Add this line
               />
             ) : (
               <div className="space-y-4">
