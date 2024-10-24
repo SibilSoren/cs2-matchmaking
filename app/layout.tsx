@@ -7,7 +7,7 @@ import { Providers } from "./providers";
 
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
-import { ToastContainer } from "react-toastify";
+import { Slide, ToastContainer } from "react-toastify";
 import { Footer } from "@/components/Footer";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -51,7 +51,13 @@ export default function RootLayout({
             </main>
             <Footer />
           </div>
-          <ToastContainer />
+          <ToastContainer
+            position="top-right"
+            autoClose={2000}
+            hideProgressBar={true}
+            newestOnTop={false}
+            transition={Slide}
+          />
         </Providers>
       </body>
     </html>

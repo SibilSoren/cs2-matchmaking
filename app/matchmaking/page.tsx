@@ -52,9 +52,10 @@ const MapVeto: React.FC<MapVetoProps> = ({
   const [vetoedMaps, setVetoedMaps] = useState<string[]>([]);
   const [pickedMaps, setPickedMaps] = useState<string[]>([]);
   const [mapVetoTurn, setMapVetoTurn] = useState<Player | null>(null);
+  const [vetoComplete, setVetoComplete] = useState(false);
+  const [deciderMap, setDeciderMap] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set the initial map veto turn to the captain who lost the coin flip
     setMapVetoTurn(
       captains.find((captain) => captain.id !== coinFlipWinner?.id) || null
     );
@@ -74,37 +75,62 @@ const MapVeto: React.FC<MapVetoProps> = ({
       isVeto = totalActions < 2;
     }
 
-    if (isVeto) {
-      setVetoedMaps([...vetoedMaps, mapName]);
-    } else {
-      setPickedMaps([...pickedMaps, mapName]);
-    }
+    const newVetoedMaps = isVeto ? [...vetoedMaps, mapName] : vetoedMaps;
+    const newPickedMaps = isVeto ? pickedMaps : [...pickedMaps, mapName];
 
-    // Switch turn
-    setMapVetoTurn(
-      mapVetoTurn?.id === captains[0].id ? captains[1] : captains[0]
+    setVetoedMaps(newVetoedMaps);
+    setPickedMaps(newPickedMaps);
+
+    const remainingMaps = CS2_MAPS.filter(
+      (map) =>
+        !newVetoedMaps.includes(map.name) && !newPickedMaps.includes(map.name)
     );
+
+    if (remainingMaps.length === 1) {
+      // Automatically select the last remaining map as the decider
+      setDeciderMap(remainingMaps[0].name);
+      setPickedMaps([...newPickedMaps, remainingMaps[0].name]);
+      setVetoComplete(true);
+    } else {
+      setMapVetoTurn(
+        mapVetoTurn?.id === captains[0].id ? captains[1] : captains[0]
+      );
+      checkVetoComplete(newVetoedMaps, newPickedMaps);
+    }
   };
 
   const getMapStatus = (mapName: string) => {
     if (vetoedMaps.includes(mapName)) return "Vetoed";
-    if (pickedMaps.includes(mapName)) return "Picked";
+    if (pickedMaps.includes(mapName)) {
+      if (mapName === deciderMap) return "Decider";
+      return "Picked";
+    }
     return "Available";
   };
 
-  const getRemainingMap = () => {
-    return CS2_MAPS.find(
-      (map) => !vetoedMaps.includes(map.name) && !pickedMaps.includes(map.name)
-    );
-  };
+  const checkVetoComplete = (
+    currentVetoedMaps: string[],
+    currentPickedMaps: string[]
+  ) => {
+    let complete = false;
 
-  const isVetoComplete = () => {
-    if (mapVetoFormat === "bo1") return vetoedMaps.length === 6;
-    if (mapVetoFormat === "bo3")
-      return vetoedMaps.length === 4 && pickedMaps.length === 2;
-    if (mapVetoFormat === "bo5")
-      return vetoedMaps.length === 2 && pickedMaps.length === 4;
-    return false;
+    if (mapVetoFormat === "bo1" && currentVetoedMaps.length === 6) {
+      complete = true;
+    } else if (
+      mapVetoFormat === "bo3" &&
+      currentVetoedMaps.length === 4 &&
+      currentPickedMaps.length === 2
+    ) {
+      complete = true;
+    } else if (
+      mapVetoFormat === "bo5" &&
+      currentVetoedMaps.length === 2 &&
+      currentPickedMaps.length === 4
+    ) {
+      complete = true;
+    }
+
+    setVetoComplete(complete);
   };
 
   const getCurrentAction = () => {
@@ -124,24 +150,25 @@ const MapVeto: React.FC<MapVetoProps> = ({
       <h3 className="text-xl font-semibold">
         Map Veto - {mapVetoFormat.toUpperCase()}
       </h3>
-      <p>
-        {mapVetoTurn?.name}'s turn to {getCurrentAction()}
-      </p>
+      {!vetoComplete && (
+        <p>
+          {mapVetoTurn?.name}&apos;s turn to {getCurrentAction()}
+        </p>
+      )}
       <div className="flex justify-between space-x-2">
         {CS2_MAPS.map((map) => (
           <button
             key={map.name}
-            className={`flex-grow relative h-96 w-1/7 rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
+            className={`flex-grow relative h-96 w-1/7 rounded-lg overflow-hidden cursor-pointer transition-all duration-300 mx-2 ${
               getMapStatus(map.name) === "Vetoed"
                 ? "opacity-50 scale-95"
-                : getMapStatus(map.name) === "Picked"
-                  ? "ring-4 ring-green-500 scale-105"
+                : getMapStatus(map.name) === "Picked" ||
+                    getMapStatus(map.name) === "Decider"
+                  ? "ring-4 ring-green-500 scale-100"
                   : "hover:scale-105"
             }`}
             onClick={() => handleMapAction(map.name)}
-            disabled={
-              isVetoComplete() || getMapStatus(map.name) !== "Available"
-            }
+            disabled={vetoComplete || getMapStatus(map.name) !== "Available"}
           >
             <img
               alt={map.name}
@@ -156,7 +183,9 @@ const MapVeto: React.FC<MapVetoProps> = ({
                     ? "text-red-500"
                     : getMapStatus(map.name) === "Picked"
                       ? "text-green-500"
-                      : "text-white"
+                      : getMapStatus(map.name) === "Decider"
+                        ? "text-yellow-500"
+                        : "text-white"
                 }`}
               >
                 {getMapStatus(map.name)}
@@ -165,19 +194,19 @@ const MapVeto: React.FC<MapVetoProps> = ({
           </button>
         ))}
       </div>
-      {isVetoComplete() && (
-        <div className="mt-4">
+      {vetoComplete && (
+        <div className="mt-4 flex flex-col items-center">
           <h4 className="text-lg font-semibold">Final Map Selection:</h4>
           <ul>
             {pickedMaps.map((map, index) => (
               <li key={map}>
-                Map {index + 1}: {map}
+                Map {index + 1}: {map} {map === deciderMap ? "(Decider)" : ""}
               </li>
             ))}
-            {getRemainingMap() && (
-              <li>Decider Map: {getRemainingMap()?.name}</li>
-            )}
           </ul>
+          <Button color="primary" className="mt-4">
+            Proceed to Match
+          </Button>
         </div>
       )}
     </div>
@@ -298,7 +327,6 @@ export default function Matchmaking() {
     const shuffled = [...selectedPlayers].sort(() => 0.5 - Math.random());
 
     setCaptains(shuffled.slice(0, 2));
-    toast.success("New captains have been selected!");
   };
 
   const handleCustomCaptainSelection = () => {
@@ -429,164 +457,12 @@ export default function Matchmaking() {
     setMapVetoFormat(format);
   };
 
-  const MapVeto = () => {
-    const [vetoedMaps, setVetoedMaps] = useState<string[]>([]);
-    const [pickedMaps, setPickedMaps] = useState<string[]>([]);
-    const [mapVetoFormat, setMapVetoFormat] = useState<
-      "bo1" | "bo3" | "bo5" | null
-    >(null);
-
-    useEffect(() => {
-      // Set the initial map veto turn to the captain who lost the coin flip
-      setMapVetoTurn(
-        captains.find((captain) => captain.id !== coinFlipWinner?.id) || null
-      );
-    }, []);
-
-    if (!mapVetoFormat) {
-      return (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Select Map Veto Format</h3>
-          <div className="flex space-x-4">
-            <Button onClick={() => setMapVetoFormat("bo1")}>Best of 1</Button>
-            <Button onClick={() => setMapVetoFormat("bo3")}>Best of 3</Button>
-            <Button onClick={() => setMapVetoFormat("bo5")}>Best of 5</Button>
-          </div>
-        </div>
-      );
-    }
-
-    const handleMapAction = (mapName: string) => {
-      if (vetoedMaps.includes(mapName) || pickedMaps.includes(mapName)) return;
-
-      const totalActions = vetoedMaps.length + pickedMaps.length;
-      let isVeto = true;
-
-      if (mapVetoFormat === "bo1") {
-        isVeto = totalActions < 6;
-      } else if (mapVetoFormat === "bo3") {
-        isVeto = totalActions < 2 || (totalActions >= 4 && totalActions < 6);
-      } else if (mapVetoFormat === "bo5") {
-        isVeto = totalActions < 2;
-      }
-
-      if (isVeto) {
-        setVetoedMaps([...vetoedMaps, mapName]);
-      } else {
-        setPickedMaps([...pickedMaps, mapName]);
-      }
-
-      // Switch turn
-      setMapVetoTurn(
-        mapVetoTurn?.id === captains[0].id ? captains[1] : captains[0]
-      );
-    };
-
-    const getMapStatus = (mapName: string) => {
-      if (vetoedMaps.includes(mapName)) return "Vetoed";
-      if (pickedMaps.includes(mapName)) return "Picked";
-      return "Available";
-    };
-
-    const getRemainingMap = () => {
-      return CS2_MAPS.find(
-        (map) =>
-          !vetoedMaps.includes(map.name) && !pickedMaps.includes(map.name)
-      );
-    };
-
-    const isVetoComplete = () => {
-      if (mapVetoFormat === "bo1") return vetoedMaps.length === 6;
-      if (mapVetoFormat === "bo3")
-        return vetoedMaps.length === 4 && pickedMaps.length === 2;
-      if (mapVetoFormat === "bo5")
-        return vetoedMaps.length === 2 && pickedMaps.length === 4;
-      return false;
-    };
-
-    const getCurrentAction = () => {
-      const totalActions = vetoedMaps.length + pickedMaps.length;
-      if (mapVetoFormat === "bo1") return "ban";
-      if (mapVetoFormat === "bo3") {
-        return totalActions < 2 || totalActions >= 4 ? "ban" : "pick";
-      }
-      if (mapVetoFormat === "bo5") {
-        return totalActions < 2 ? "ban" : "pick";
-      }
-      return "";
-    };
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">
-          Map Veto - {mapVetoFormat.toUpperCase()}
-        </h3>
-        <p>
-          {mapVetoTurn?.name}'s turn to {getCurrentAction()}
-        </p>
-        <div className="flex justify-between space-x-2">
-          {CS2_MAPS.map((map) => (
-            <button
-              key={map.name}
-              className={`flex-grow relative h-96 w-1/7 rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
-                getMapStatus(map.name) === "Vetoed"
-                  ? "opacity-50 scale-95"
-                  : getMapStatus(map.name) === "Picked"
-                    ? "ring-4 ring-green-500 scale-105"
-                    : "hover:scale-105"
-              }`}
-              onClick={() => handleMapAction(map.name)}
-              disabled={
-                isVetoComplete() || getMapStatus(map.name) !== "Available"
-              }
-            >
-              <img
-                alt={map.name}
-                className="w-full h-full object-cover"
-                src={map.image}
-              />
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50">
-                <span className="text-white font-bold text-lg">{map.name}</span>
-                <span
-                  className={`text-sm ${
-                    getMapStatus(map.name) === "Vetoed"
-                      ? "text-red-500"
-                      : getMapStatus(map.name) === "Picked"
-                        ? "text-green-500"
-                        : "text-white"
-                  }`}
-                >
-                  {getMapStatus(map.name)}
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
-        {isVetoComplete() && (
-          <div className="mt-4">
-            <h4 className="text-lg font-semibold">Final Map Selection:</h4>
-            <ul>
-              {pickedMaps.map((map, index) => (
-                <li key={map}>
-                  Map {index + 1}: {map}
-                </li>
-              ))}
-              {getRemainingMap() && (
-                <li>Decider Map: {getRemainingMap()?.name}</li>
-              )}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4">
       <div className="w-full max-w-7xl space-y-6">
         {" "}
         {/* Changed to max-w-7xl for more width */}
-        <h1 className="text-3xl font-bold text-center">Matchmaking</h1>
+        <h1 className="text-3xl font-bold text-center">CS-2 Matchmaking</h1>
         <div className="bg-gray-800 rounded-xl p-8 shadow-lg">
           {showMapVeto ? (
             mapVetoFormat ? (
@@ -668,7 +544,7 @@ export default function Matchmaking() {
                     <h3 className="text-lg font-medium mb-3">
                       Selected Players ({selectedPlayers.length}/10)
                     </h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {selectedPlayers.map((player) => (
                         <div
                           key={player.id}
@@ -683,10 +559,7 @@ export default function Matchmaking() {
               ) : step === 2 ? (
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-lg font-medium mb-4">
-                      Select Captains
-                    </h3>
-                    <div className="space-x-4">
+                    <div className="space-x-4 flex justify-center">
                       <Button color="primary" onClick={selectRandomCaptains}>
                         {captains.length === 2
                           ? "Reselect Random Captains"
@@ -699,12 +572,14 @@ export default function Matchmaking() {
                   </div>
 
                   {captains.length === 2 && (
-                    <div>
+                    <div className="flex flex-col items-center">
                       <h3 className="text-lg font-medium mb-4">
                         Selected Captains
                       </h3>
-                      <div className="text-xl font-bold">
-                        {captains[0].name} vs {captains[1].name}
+                      <div className="text-2xl font-bold">
+                        {captains[0].name}{" "}
+                        <span className="text-4xl text-orange-500">vs</span>{" "}
+                        {captains[1].name}
                       </div>
                     </div>
                   )}
@@ -872,7 +747,7 @@ export default function Matchmaking() {
                           Team Selection
                         </h3>
                         <p className="text-lg">
-                          {currentPicker?.name}'s turn to pick
+                          {currentPicker?.name}&apos;s turn to pick
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
                           {remainingPlayers.map((player) => (
@@ -889,42 +764,44 @@ export default function Matchmaking() {
                         <div className="grid grid-cols-2 gap-6 mt-8">
                           <div className="bg-gray-700 p-4 rounded-lg">
                             <h4 className="font-medium mb-3 text-center">
-                              {captains[0].name}'s Team
+                              {captains[0].name}&apos;s Team
                             </h4>
                             <ul className="space-y-2">
                               <li className="font-semibold">
                                 {captains[0].name} (Captain)
                               </li>
                               {teamA.map((player) => (
-                                <li
-                                  key={player.id}
-                                  className="cursor-pointer hover:text-blue-300"
-                                  onClick={() =>
-                                    handlePlayerReturn(player, "A")
-                                  }
-                                >
-                                  {player.name}
+                                <li key={player.id}>
+                                  <button
+                                    className="w-full text-left cursor-pointer hover:text-blue-300"
+                                    onClick={() =>
+                                      handlePlayerReturn(player, "A")
+                                    }
+                                  >
+                                    {player.name}
+                                  </button>
                                 </li>
                               ))}
                             </ul>
                           </div>
                           <div className="bg-gray-700 p-4 rounded-lg">
                             <h4 className="font-medium mb-3 text-center">
-                              {captains[1].name}'s Team
+                              {captains[1].name}&apos;s Team
                             </h4>
                             <ul className="space-y-2">
                               <li className="font-semibold">
                                 {captains[1].name} (Captain)
                               </li>
                               {teamB.map((player) => (
-                                <li
-                                  key={player.id}
-                                  className="cursor-pointer hover:text-blue-300"
-                                  onClick={() =>
-                                    handlePlayerReturn(player, "B")
-                                  }
-                                >
-                                  {player.name}
+                                <li key={player.id}>
+                                  <button
+                                    className="w-full text-left cursor-pointer hover:text-blue-300"
+                                    onClick={() =>
+                                      handlePlayerReturn(player, "B")
+                                    }
+                                  >
+                                    {player.name}
+                                  </button>
                                 </li>
                               ))}
                             </ul>
@@ -947,11 +824,12 @@ export default function Matchmaking() {
             </>
           )}
         </div>
-        {shouldShowButtons() && (
+        {!showMapVeto && shouldShowButtons() && (
           <div className="flex justify-between w-full">
             {step > 1 && (
               <Button
                 color="secondary"
+                variant="bordered"
                 onClick={() => handleStepChange(step - 1)}
               >
                 Back
