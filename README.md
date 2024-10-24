@@ -1,53 +1,57 @@
-# Next.js & NextUI Template
+# CS2 Matchmaking Companion
 
-This is a template for creating applications using Next.js 14 (app directory) and NextUI (v2).
+Welcome to the CS2 Matchmaking Companion! This app is your ultimate sidekick for Counter-Strike 2 matchmaking, helping you track your progress, analyze your performance, and climb the ranks.
 
-[Try it on CodeSandbox](https://githubbox.com/nextui-org/next-app-template)
+## What's This All About?
 
-## Technologies Used
+Ever felt lost in the world of CS2 matchmaking? We've got your back! This app is designed to make your competitive journey smoother and more enjoyable. Whether you're a seasoned veteran or just starting out, we've packed in features to help you improve your game and have more fun along the way.
 
-- [Next.js 14](https://nextjs.org/docs/getting-started)
-- [NextUI v2](https://nextui.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Tailwind Variants](https://tailwind-variants.org)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [next-themes](https://github.com/pacocoursey/next-themes)
+## Cool Features
 
-## How to Use
+- **Match History**: Keep tabs on your recent games and see how you're progressing.
+- **Performance Analytics**: Dive deep into your stats and spot areas for improvement.
+- **Rank Tracker**: Watch your rank climb (hopefully!) as you put in the hours.
+- **Team Finder**: Connect with like-minded players and form the ultimate squad.
+- **Strategy Guide**: Access tips and tricks to up your game.
 
-### Use the template with create-next-app
+## Tech Stack
 
-To create a new project based on this template using `create-next-app`, run the following command:
+We've used some pretty awesome tech to build this app:
 
-```bash
-npx create-next-app -e https://github.com/nextui-org/next-app-template
-```
+- **Next.js 14**: The backbone of our app, providing a smooth React experience.
+- **React**: Because who doesn't love building UIs with components?
+- **TypeScript**: Keeping our code clean and error-free.
+- **Tailwind CSS**: Making our app look good without the hassle.
+- **NextUI**: For those sleek UI components that make life easier.
+- **Prisma**: Handling our database needs like a champ.
+- **tRPC**: Type-safe API calls for the win!
+- **Next-Auth**: Keeping your account safe and sound.
+- **Framer Motion**: Adding some pizzazz with smooth animations.
+- **React Query**: Managing server state like a boss.
+- **Zod**: Validating data so you don't have to worry.
 
-### Install dependencies
+## Get Started
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
+Ready to jump in? Here's how to get the app running on your machine:
 
-```bash
-npm install
-```
+1. Clone this repo to your local machine.
+2. Install the dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up your environment variables (check out `.env.example` for what you need).
+4. Fire up the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open your browser and head to `http://localhost:3000`. You're in!
 
-### Run the development server
+## Contribute
 
-```bash
-npm run dev
-```
-
-### Setup pnpm (optional)
-
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
-
-```bash
-public-hoist-pattern[]=*@nextui-org/*
-```
-
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
+Found a bug? Have an awesome idea? We're all ears! Feel free to open an issue or submit a pull request. Let's make this app even better together.
 
 ## License
 
-Licensed under the [MIT license](https://github.com/nextui-org/next-app-template/blob/main/LICENSE).
+This project is licensed under the MIT License. Feel free to use it, modify it, and make it your own!
+
+Happy fragging! 🎮💥

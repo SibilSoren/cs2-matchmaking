@@ -13,6 +13,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Divider,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
@@ -225,10 +226,11 @@ const MapVeto: React.FC<MapVetoProps> = ({
           <ModalBody>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h5 className="font-semibold mb-2">
+                <h5 className="font-bold mb-2 text-xl">
                   {captains[0].name}&apos;s Team
                 </h5>
-                <ul>
+                <Divider />
+                <ul className="mt-2">
                   <li>{captains[0].name} (Captain)</li>
                   {teamA.map((player) => (
                     <li key={player.id}>{player.name}</li>
@@ -236,10 +238,11 @@ const MapVeto: React.FC<MapVetoProps> = ({
                 </ul>
               </div>
               <div>
-                <h5 className="font-semibold mb-2">
+                <h5 className="font-bold mb-2 text-xl">
                   {captains[1].name}&apos;s Team
                 </h5>
-                <ul>
+                <Divider />
+                <ul className="mt-2">
                   <li>{captains[1].name} (Captain)</li>
                   {teamB.map((player) => (
                     <li key={player.id}>{player.name}</li>
